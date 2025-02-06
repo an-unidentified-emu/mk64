@@ -62,12 +62,18 @@ struct D_80150158 {
 struct Controller {
     s16 rawStickX;
     s16 rawStickY;
+    f32 stickX;
+    f32 stickY;
+    f32 stickMag;
     u16 button;          // HeldButton
     u16 buttonPressed;   // OnTriggered
     u16 buttonDepressed; // OffTriggered
+    u16 buttonDown;
     u16 stickDirection;
     u16 stickPressed;   // OffTriggered
     u16 stickDepressed; // OnTriggered
+    OSContStatus *statusData;
+    OSContPadEx *controllerData;
 };
 
 // Camera path struct? Or something like that. For GP race won scene?

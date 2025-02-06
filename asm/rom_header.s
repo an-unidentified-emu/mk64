@@ -2,7 +2,7 @@
  * Mario Kart 64 ROM header
  * Only the first 0x18 bytes matter to the console.
  */
-
+#define USE_GAMECUBE_CONTROLLER
 .byte  0x80, 0x37, 0x12, 0x40   /* PI BSD Domain 1 register */
 .word  0x0000000F               /* Clockrate setting*/
 .word  entry_point               /* Entrypoint */
@@ -15,7 +15,12 @@
 .word  0x00000000               /* Unknown */
 .word  0x00000000               /* Unknown */
 .ascii "MARIOKART64         "   /* Internal ROM name */
+#if defined(USE_GAMECUBE_CONTROLLER)
+/* Advanced homebrew ROM header bytes: https://n64brew.dev/wiki/ROM_Header#Advanced_Homebrew_ROM_Header */
+.word  0x82000000
+#else
 .word  0x00000000               /* Unknown */
+#endif
 .word  0x0000004E               /* Cartridge */
 .ascii "KT"                     /* Cartridge ID */
 

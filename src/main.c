@@ -39,6 +39,7 @@
 #include <debug.h>
 #include "crash_screen.h"
 #include "buffers/gfx_output_buffer.h"
+#include "gamecube_controller.c"
 
 void func_80091B78(void);
 void audio_init(void);
@@ -345,8 +346,44 @@ void update_controller(s32 index) {
     controller->stickDirection = stick;
 }
 
+
+void adjust_analog_stick(struct Controller *controller) {
+    // Reset the controller's x and y floats.
+    controller->stickX = 0;
+    controller->stickY = 0;
+
+    // Modulate the rawStickX and rawStickY to be the new f32 values by adding/subtracting 6.
+    if (controller->rawStickX <= -8) {
+        controller->stickX = controller->rawStickX + 6;
+    }
+
+    if (controller->rawStickX >= 8) {
+        controller->stickX = controller->rawStickX - 6;
+    }
+
+    if (controller->rawStickY <= -8) {
+        controller->stickY = controller->rawStickY + 6;
+    }
+
+    if (controller->rawStickY >= 8) {
+        controller->stickY = controller->rawStickY - 6;
+    }
+
+    // Calculate f32 magnitude from the center by vector length.
+    controller->stickMag =
+        sqrtf(controller->stickX * controller->stickX + controller->stickY * controller->stickY);
+
+    // Magnitude cannot exceed 64.0f: if it does, modify the values
+    // appropriately to flatten the values down to the allowed maximum value.
+    if (controller->stickMag > 64) {
+        controller->stickX *= 64 / controller->stickMag;
+        controller->stickY *= 64 / controller->stickMag;
+        controller->stickMag = 64;
+    }
+}
+
 void read_controllers(void) {
-    OSMesg msg;
+    /*OSMesg msg;
 
     osContStartReadData(&gSIEventMesgQueue);
     osRecvMesg(&gSIEventMesgQueue, &msg, OS_MESG_BLOCK);
@@ -371,7 +408,38 @@ void read_controllers(void) {
                gControllerFour->stickPressed);
     gControllerFive->stickDepressed =
         (s16) (((gControllerOne->stickDepressed | gControllerTwo->stickDepressed) | gControllerThree->stickDepressed) |
-               gControllerFour->stickDepressed);
+               gControllerFour->stickDepressed);*/
+
+                   s32 i;
+
+    // If any controllers are plugged in, update the controller information.
+    if (gControllerBits) {
+        osContGetReadDataEx(&gControllerPads[0]);
+
+        for (i = 0; i < 4; i++) {
+            struct Controller *controller = &gControllers[i];
+            // if we're receiving inputs, update the controller struct with the new button info.
+            if (controller->controllerData != NULL) {
+                // HackerSM64: Swaps Z and L, only on console, and only when playing with a GameCube controller.
+                controller->rawStickX = controller->controllerData->stick_x;
+                controller->rawStickY = controller->controllerData->stick_y;
+                controller->buttonPressed = ~controller->buttonDown & controller->controllerData->button;
+                controller->buttonDepressed = ~controller->controllerData->button & controller->buttonDown;
+                // 0.5x A presses are a good meme
+                controller->buttonDown = controller->controllerData->button;
+                adjust_analog_stick(controller);
+            } else { // otherwise, if the controllerData is NULL, 0 out all of the inputs.
+                controller->rawStickX = 0;
+                controller->rawStickY = 0;
+                controller->buttonPressed = 0;
+                controller->buttonDepressed = 0;
+                controller->buttonDown = 0;
+                controller->stickX = 0;
+                controller->stickY = 0;
+                controller->stickMag = 0;
+            }
+        }
+    }
 }
 
 void func_80000BEC(void) {

@@ -30,6 +30,9 @@ OUTPUT_ARCH (mips)
 #define END_NOLOAD(name) \
     _##name##SegmentNoloadEnd = ADDR(.name.noload) + SIZEOF(.name.noload);
 
+/* Overwrite a libultra function with its modified counterpart for GCN controller support */ 
+__osContGetInitData = __osContGetInitDataEx;
+
 SECTIONS
 {
    __romPos = 0;

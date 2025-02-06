@@ -3,7 +3,6 @@
 
 /* Internal functions used by the operating system */
 /* Do not include this header in application code */
-
 /* Variables */
 
 // extern u64 osClockRate;
@@ -14,5 +13,5 @@
 u32 __osDisableInt(void);
 void __osRestoreInt(u32);*/
 OSThread* __osGetCurrFaultedThread(void);
-
+/* Serial interface (Si) */
 #endif
